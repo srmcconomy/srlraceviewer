@@ -1,11 +1,13 @@
 
 var i = 0;
-$.getJSON( "http://api.speedrunslive.com/races", function(json) {
+var background;
+var races = [];
+$(document).ready(function() {
+	background = chrome.extension.getBackgroundPage();
+	races = background.getRaces();
 	$("#loading").hide();
 	var count = 0;
-	chrome.storage.sync.get({"gamesList":[]}, function(r) {
-	json.races.forEach(function(x) {
-	if (r.gamesList.length==0||r.gamesList.indexOf(x.game.id.toString()) > -1) {
+	for (x of races) {
 		count++;
 		$('#listcontainer').append( '<div id="item' + i + '"><a class="racebar"></a></div>');
 		$('#item' + i + ' .racebar').append('<div class="race_img" style="background-image: url(\'http://cdn.speedrunslive.com/images/games/' + x.game.abbrev + '.jpg\');"></div>');
@@ -63,14 +65,10 @@ $.getJSON( "http://api.speedrunslive.com/races", function(json) {
 		});
 		i++;	
 	}
-		
-	});
-		if (count === 0) {
-			$("#noraces").show("fast");
-		}
-		chrome.browserAction.setBadgeText({text:count.toString()});
-			$("#listcontainer").slideDown(100*(count > 9 ? 9 : count));
-	});
+	if (count === 0) {
+		$("#noraces").show();
+	}
+	//$("#listcontainer").slideDown(100*(count > 9 ? 9 : count));
 	setInterval(tick, 1000);
 	
 });
@@ -102,9 +100,9 @@ function onNameClick(e) {
 }
 
 function tick() {
-	console.log($(".time").html());
+	//console.log($(".time").html());
 	$(".time").each(function() {
-		console.log(this);
+		//console.log(this);
 		$(this).attr("data-sec", parseInt($(this).attr("data-sec")) + 1);
 		$(this).html(toTime($(this).attr("data-sec")));
 	});

@@ -23,13 +23,13 @@ $(function() {
 		if (e.target.checked) {
 			chrome.storage.sync.get({"gamesList":[]}, function(r) {
 				r.gamesList.push(e.target.value);
-				chrome.storage.sync.set({"gamesList":r.gamesList});
+				chrome.storage.sync.set({"gamesList":r.gamesList}, chrome.extension.getBackgroundPage().loadData);
 			});
 		}else {
 			chrome.storage.sync.get({"gamesList":[]}, function(r) {
 				if (r.gamesList.indexOf(e.target.value)>-1) {
 					r.gamesList.splice(r.gamesList.indexOf(e.target.value));
-					chrome.storage.sync.set({"gamesList":r.gamesList});
+					chrome.storage.sync.set({"gamesList":r.gamesList}, chrome.extension.getBackgroundPage().loadData);
 				}
 			});
 		}

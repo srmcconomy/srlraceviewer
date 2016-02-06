@@ -47,7 +47,7 @@ $(document).ready(function () {
         html += '<td><span>' + placetext + '</span></td>';
       }
 
-      html += '<td class="entrant"' + (y.message && y.message.length > 0 ? ' title="' + y.message : '') + ' data-url="' + y.twitch + '"><a>' + y.displayname + '</a><span class="small grey"> ' + (y.trueskill == 0 ? 'unranked' : y.trueskill) + '</span></td>';
+      html += '<td class="entrant"' + (y.message && y.message.length > 0 ? ' title="' + y.message + '"' : '') + ' data-url="' + y.twitch + '"><a>' + y.displayname + '</a><span class="small grey"> ' + (y.trueskill == 0 ? 'unranked' : y.trueskill) + '</span></td>';
       if (y.statetext == "Forfeit") {
         html += '<td colspan="2" class="red">Forfeit</td>';
       } else if (y.statetext == "Finished") {

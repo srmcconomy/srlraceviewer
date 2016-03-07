@@ -1,79 +1,116 @@
+chrome.runtime.onMessage.addListener(function(message, sender, respond) {
+  if (message === 'refresh') {
+    update();
+  }
+})
+
+function htmlForEntrant(entrant) {
+  var entrantHtml = '<tr>'
+  if (entrant.place > 9000) {
+    entrantHtml += '<td></td>';
+  } else if (entrant.place === 1) {
+    entrantHtml += '<td><span class="gold">1st</span></td>';
+  } else if (entrant.place === 2) {
+    entrantHtml += '<td><span class="silver">2nd</span></td>';
+  } else if (entrant.place === 3) {
+    entrantHtml += '<td><span class="bronze">3rd</span></td>';
+  } else {
+    var placetext;
+    if (entrant.place % 10 === 1 && entrant.place != 11) {
+      placetext = entrant.place + 'th';
+    } else if (entrant.place % 10 === 2 && entrant.place != 12) {
+      placetext = entrant.place + 'nd';
+    } else if (entrant.place % 10 === 3 && entrant.place != 13) {
+      placetext = entrant.place + 'rd';
+    } else {
+      placetext = entrant.place + 'th';
+    }
+    entrantHtml += '<td><span>' + placetext + '</span></td>';
+  }
+
+  entrantHtml +=
+`<td class="entrant"${entrant.message && entrant.message.length > 0 ? ` title="${entrant.message}"` : ''} data-url="${entrant.twitch}">
+  <a>${entrant.displayname}</a>
+  <span class="small grey">${entrant.trueskill == 0 ? 'unranked' : entrant.trueskill}</span>
+</td>`;
+  if (entrant.statetext == "Forfeit") {
+    entrantHtml += '<td colspan="2" class="red">Forfeit</td>';
+  } else if (entrant.statetext == "Finished") {
+    entrantHtml += `<td colspan="2">${toTime(entrant.time)}</td>`;
+  } else {
+    entrantHtml += '<td colspan="2"></td>';
+  }
+
+  entrantHtml += '</tr>';
+  return entrantHtml;
+}
+
+
 var i = 0;
 var background;
 var races = [];
-$(document).ready(function () {
-  background = chrome.extension.getBackgroundPage();
-  races = background.getRaces();
-  $("#loading").hide();
-  var count = 0;
-  for (x of races) {
-    count++;
-    $('#listcontainer').append('<div id="item' + i + '"><a class="racebar"></a></div>');
-    $('#item' + i + ' .racebar').append('<div class="race_img" style="background-image: url(\'http://cdn.speedrunslive.com/images/games/' + x.game.abbrev + '.jpg\');"></div>');
-    $('#item' + i + ' .racebar').append('<div class="left"><strong>' + x.game.name + '</strong><br>' + x.goal + '</div>');
-    if (x.state == 3) {
-      var sec = Math.floor(Date.now() / 1000) - x.time;
-      $('#item' + i + ' .racebar').append('<div class="right"><strong>' + x.numentrants + ' Entrant' + (x.numentrants === 1 ? '' : 's') + '</strong><br><span class="green time" data-sec="' + sec + '">' + toTime(sec) + '</div>');
-    } else {
-      $('#item' + i + ' .racebar').append('<div class="right"><strong>' + x.numentrants + ' Entrant' + (x.numentrants === 1 ? '' : 's') + '</strong><br>' + x.statetext + '</div>');
-    }
-    $('#item' + i).append('<div id="ls_entrants"><table id="raceTable"><tbody><tr><td colspan="3"><div id="entrantsBar">' + x.numentrants + ' Entrant' + (x.numentrants === 1 ? '' : 's') + '</div></td></tr></tbody></table></div>');
-    $('#item' + i + ' #ls_entrants').hide();
-    for (var key in x.entrants) {
-      var html = '<tr>'
-      var y = x.entrants[key];
-
-
-      if (y.place > 9000) {
-
-        html += '<td></td>';
-      } else if (y.place === 1) {
-        html += '<td><span class="gold">1st</span></td>';
-      } else if (y.place === 2) {
-        html += '<td><span class="silver">2nd</span></td>';
-      } else if (y.place === 3) {
-        html += '<td><span class="bronze">3rd</span></td>';
-      } else {
-        var placetext;
-        if (y.place % 10 === 1 && y.place != 11) {
-          placetext = y.place + 'th';
-        } else if (y.place % 10 === 2 && y.place != 12) {
-          placetext = y.place + 'nd';
-        } else if (y.place % 10 === 3 && y.place != 13) {
-          placetext = y.place + 'rd';
-        } else {
-          placetext = y.place + 'th';
-        }
-        html += '<td><span>' + placetext + '</span></td>';
+function update() {
+  chrome.runtime.getBackgroundPage(function(background) {
+    races = background.getRaces();
+    $("#loading").hide();
+    for (var i = 0; i < races.length; i++) {
+      var race = races[i];
+      var goal = race.goal;
+      if (goal.match(/^http:\/\/[^\s]+$/)) {
+        goal = `<a data-url="${goal}">${goal}</a>`;
       }
-
-      html += '<td class="entrant"' + (y.message && y.message.length > 0 ? ' title="' + y.message + '"' : '') + ' data-url="' + y.twitch + '"><a>' + y.displayname + '</a><span class="small grey"> ' + (y.trueskill == 0 ? 'unranked' : y.trueskill) + '</span></td>';
-      if (y.statetext == "Forfeit") {
-        html += '<td colspan="2" class="red">Forfeit</td>';
-      } else if (y.statetext == "Finished") {
-        html += '<td colspan="2">' + toTime(y.time) + '</td>';
+      var right;
+      if (race.state == 3) {
+        var sec = Math.floor(Date.now() / 1000) - race.time;
+        right = `<div class="right"><strong>${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</strong><br><span class="green time" data-sec="${sec}">${toTime(sec)}</span></div>`;
       } else {
-        html += '<td colspan="2"></td>';
+        right = `<div class="right"><strong>${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</strong><br>${race.statetext}</div>`;
       }
-
-      html += '</tr>';
-      $('#item' + i + ' div table tbody').append(html);
+      var entrantsTable = "";
+      for (var j in race.entrants) {
+        var entrant = race.entrants[j];
+        entrantsTable += htmlForEntrant(entrant);
+      }
+      var html =
+  `<div>
+    <div class="racebar">
+      <div class="race_img" style="background-image: url('http://cdn.speedrunslive.com/images/games/${race.game.abbrev}.jpg');"></div>
+      <div class="left"><strong>${race.game.name}</strong><br>${goal}</div>
+      ${right}
+    </div>
+    <div id="ls_entrants" style="display:none">
+      <table id="raceTable"><tbody><tr>
+        <td colspan="3">
+          <div id="entrantsBar">${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</div>
+        </td>
+        ${entrantsTable}
+      </tr></tbody></table>
+    </div>
+  </div>`;
+      $('#listcontainer').append(html);
     }
-    $('#item' + i + ' .racebar').bind("click", function () {
-      $(this).next().toggle("fast");
-    });
-    i++;
-  }
-  if (count === 0) {
-    $("#noraces").show();
-  }
-  //$("#listcontainer").slideDown(100*(count > 9 ? 9 : count));
-  setInterval(tick, 1000);
-
-});
+    if (i === 0) {
+      $("#noraces").show();
+    }
+  });
+}
 
 $(function () {
   $('body').on("click", ".entrant a", onNameClick);
+  $('body').on("click", '.racebar', function () {
+    $(this).next().toggle("fast");
+  });
+  $('body').on('click', '.racebar a', function(e){
+    e.stopPropagation();
+    chrome.tabs.create({
+      "url": $(e.target).attr("data-url")
+    });
+  });
+  $('#refresh').on('click', function(e) {
+    refresh();
+  })
+  setInterval(tick, 1000);
+  update();
 });
 
 function zeroFill(x) {
@@ -101,10 +138,12 @@ function onNameClick(e) {
 }
 
 function tick() {
-  //console.log($(".time").html());
   $(".time").each(function () {
-    //console.log(this);
     $(this).attr("data-sec", parseInt($(this).attr("data-sec")) + 1);
     $(this).html(toTime($(this).attr("data-sec")));
   });
+}
+
+function refresh() {
+  chrome.runtime.sendMessage('refresh', update);
 }

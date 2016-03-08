@@ -5,10 +5,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, respond) {
 })
 
 function newRace(race, id) {
-  var goal = race.goal;
-  if (goal.match(/^http:\/\/[^\s]+$/)) {
-    goal = `<a data-url="${goal}">${goal}</a>`;
-  }
+  var goal = race.goal.replace(/https?:\/\/[^\s]+/, '<a data-url="$&">$&</a>')
   var right;
   if (race.state == 3) {
     var sec = Math.floor(Date.now() / 1000) - race.time;
@@ -82,11 +79,7 @@ function newEntrant(entrant, id) {
 function updateRace(race, currentRace, id) {
   var elem = $(`#${id}`)
   if (race.goal !== currentRace.goal) {
-    var goal = race.goal;
-    if (goal.match(/^http:\/\/[^\s]+$/)) {
-      goal = `<a data-url="${goal}">${goal}</a>`;
-    }
-    elem.find('.goal').html(goal)
+    elem.find('.goal').html(race.goal.replace(/https?:\/\/[^s]+/, '<a data-url="$&">$&</a>'))
   }
   if (race.state !== currentRace.state) {
     if (race.state == 3) {

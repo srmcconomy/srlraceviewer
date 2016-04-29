@@ -4,14 +4,39 @@ chrome.runtime.onMessage.addListener(function (message, sender, respond) {
   }
 })
 
+function cloneRace(race) {
+  var newRace = {};
+  newRace.goal = race.goal;
+  newRace.state = race.statetext;
+  newRace.game = race.game;
+  newRace.goal = race.numentrants;
+  newRace.goal = race.time;
+  newRace.entrants = {};
+  for (var e in race.entrants) {
+    newRace.entrants[e] = cloneEntrant(race.entrants[e]);
+  }
+  return newRace;
+}
+
+function cloneEntrant(entrant) {
+  var newEntrant = {};
+  newEntrant.place = entrant.place;
+  newEntrant.message = entrant.message;
+  newEntrant.displayname = entrant.displayname;
+  newEntrant.twitch = entrant.twitch;
+  newEntrant.state = entrant.state;
+  newEntrant.statetext = entrant.statetext;
+  return newEntrant;
+}
+
 function newRace(race, id) {
   var goal = race.goal.replace(/https?:\/\/[^\s]+/, '<a data-url="$&">$&</a>')
   var right;
   if (race.state == 3) {
     var sec = Math.floor(Date.now() / 1000) - race.time;
-    right = `<div class="right"><span class="numentrants"><strong>${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</strong></span><br><span class="green time" data-sec="${sec}">${toTime(sec)}</span></div>`;
+    right = `<div class="right"><strong><span class="numentrants">${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</span></strong><br><span class="green time" data-sec="${sec}">${toTime(sec)}</span></div>`;
   } else {
-    right = `<div class="right"><span class="numentrants"><strong>${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</strong></span><br><span class="state">${race.statetext}</state></div>`;
+    right = `<div class="right"><strong><span class="numentrants">${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</span></strong><br><span class="state">${race.statetext}</state></div>`;
   }
   var entrantsTable = "";
   for (var j in race.entrants) {
@@ -102,7 +127,7 @@ function updateRace(race, currentRace, id) {
     }
   }
   if (race.numentrants !== currentRace.numentrants) {
-    elem.find('.numentrants').html(`<strong>${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}</strong>`);
+    elem.find('.numentrants').html(`${race.numentrants} Entrant${race.numentrants === 1 ? '' : 's'}`);
   }
   for (var e in race.entrants) {
     var entrant = race.entrants[e];
@@ -110,12 +135,12 @@ function updateRace(race, currentRace, id) {
       var currentEntrant = currentRace.entrants[e];
       updateEntrant(entrant, currentEntrant, e, elem);
     } else {
-      elem.find('#raceTable tr').append(newEntrant(entrant, e));
+      elem.find('#raceTable tbody').append(newEntrant(entrant, e));
     }
   }
   for (var e in currentRace.entrants) {
     if (!race.entrants.hasOwnProperty(e)) {
-      elem.find('#raceTable tr').remove(`#${e}`)
+      elem.find('#raceTable tbody').remove(`#${e}`)
     }
   }
 }
@@ -188,7 +213,10 @@ function update() {
     if (Object.keys(races).length === 0) {
       $("#noraces").show();
     }
-    currentRaces = races;
+    currentRaces = {};
+    for (var r in races) {
+      currentRaces[r] = cloneRace(races[r]);
+    }
   });
 }
 
